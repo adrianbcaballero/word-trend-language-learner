@@ -125,3 +125,57 @@ resource "aws_cloudfront_origin_access_control" "Site_Access" {
 Create S3 bucket used for storage of predictive word bank 
 =================================================================
 */
+
+resource "aws_s3_bucket" "wordbank" {
+  bucket = "wordtrendlearner-wordbank"
+}
+
+resource "aws_s3_bucket_ownership_controls" "wordbank" {
+  bucket = aws_s3_bucket.wordbank.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "wordbank" {
+  bucket = aws_s3_bucket.wordbank.id
+
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket_policy" "allow_access" {
+  bucket = aws_s3_bucket.wordbank.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        },
+        Action   = [
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:PutObject",
+          "s3:DeleteObject", 
+        ],
+        Resource = [
+          "${aws_s3_bucket.wordbank.arn}",
+          "${aws_s3_bucket.wordbank.arn}/*",
+        ]
+      }
+    ]
+  })
+}
+
+/*
+=================================================================
+Creating Lambda function that returns new word on request
+=================================================================
+*/
+
+
