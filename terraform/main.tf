@@ -174,8 +174,52 @@ resource "aws_s3_bucket_policy" "allow_access" {
 
 /*
 =================================================================
-Creating Lambda function that returns new word on request
+Set up AWS Clue to defina table schema on S3 word bank
 =================================================================
 */
 
+resource "aws_glue_catalog_database" "glue_database" {
+  name = "word_bank_datase"
+}
+
+resource "aws_glue_catalog_table" "glue_table" {
+  name          = "random_words"
+  database_name = aws_glue_catalog_database.glue_database.name
+  table_type    = "EXTERNAL_TABLE"
+
+  parameters = {
+    "skip.header.line.count" = "1"
+  }
+
+  storage_descriptor {
+    location      = "s3://wordtrendlearner-wordbank/random_words.csv"
+    input_format  = "org.apache.hadoop.mapred.TextInputFormat"
+    output_format = "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"
+
+    ser_de_info {
+      name                  = "CsvSerde"
+      serialization_library = "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"
+
+      parameters = {
+        "separatorChar" = ","
+      }
+    }
+
+    columns {
+      name = "id_num"
+      type = "int"
+    }
+
+    columns {
+      name = "word"
+      type = "string"
+    }
+  }
+}
+
+/*
+=================================================================
+Creating Lambda function that returns new word on request
+=================================================================
+*/
 

@@ -1,12 +1,12 @@
 # Word Trend Language Learner
-## [Word Learner Application Link]("Learning Trend Words!")
-The word trend language learner is an ap
+## [Word Learner Application Link](d3spm8z1oi17x0.cloudfront.net "Learning Trend Words!")
+The word trend language learner is an application that 
 
 ## Table of Contents
 
 - [Adrian Caballero Cloud Resume](#adrian-caballero-cloud-resume)
   - [Table of Contents](#table-of-contents)
-  - [Cloud Resume Challenge Overview](#cloud-resume-challenge-overview)
+  - [Word Le Overview](#cloud-resume-challenge-overview)
   - [Challenge Steps](#challenge-steps)
     - [1. Certification](#1.-certification)
     - [2. Front End Website](#2.-front-end-website)
