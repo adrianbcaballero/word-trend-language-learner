@@ -167,6 +167,17 @@ resource "aws_s3_bucket_policy" "allow_access" {
           "${aws_s3_bucket.wordbank.arn}",
           "${aws_s3_bucket.wordbank.arn}/*",
         ]
+      },
+      {
+        Effect   = "Allow",
+        Principal = {
+          Service = "glue.amazonaws.com"
+        },
+        Action   = "s3:GetObject",
+        Resource = [
+          "${aws_s3_bucket.wordbank.arn}",
+          "${aws_s3_bucket.wordbank.arn}/*",
+        ]
       }
     ]
   })
@@ -192,7 +203,7 @@ resource "aws_glue_catalog_table" "glue_table" {
   }
 
   storage_descriptor {
-    location      = "s3://wordtrendlearner-wordbank/random_words.csv"
+    location      = "s3://wordtrendlearner-wordbank/"
     input_format  = "org.apache.hadoop.mapred.TextInputFormat"
     output_format = "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"
 
