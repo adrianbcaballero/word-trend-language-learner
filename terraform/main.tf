@@ -199,20 +199,20 @@ resource "aws_glue_catalog_table" "glue_table" {
   table_type    = "EXTERNAL_TABLE"
 
   parameters = {
-    "skip.header.line.count" = "1"
+    "classification" = "csv"
   }
 
   storage_descriptor {
-    location      = "s3://wordtrendlearner-wordbank/"
+    location      = "s3://wordtrendlearner-wordbank/random_words/"
     input_format  = "org.apache.hadoop.mapred.TextInputFormat"
     output_format = "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"
 
     ser_de_info {
-      name                  = "CsvSerde"
-      serialization_library = "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"
+      serialization_library = "org.apache.hadoop.hive.serde2.OpenCSVSerde"
 
       parameters = {
         "separatorChar" = ","
+        "skip.header.lin.count" = "1"
       }
     }
 
