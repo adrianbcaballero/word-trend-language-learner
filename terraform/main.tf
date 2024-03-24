@@ -229,8 +229,78 @@ resource "aws_glue_catalog_table" "glue_table" {
 }
 
 /*
-=================================================================
-Creating Lambda function that returns new word on request
-=================================================================
+====================================================================
+Creating Lambda function that returns new word on request and on web access
+====================================================================
 */
 
+//lambda function triggered by api gateway
+data "archive_file" "new-word-lambda" {
+  type = "zip"
+  source_file = "${path.module}/../../src/backend/api-lambda/new-word-lambda.py"
+  output_path = "lambda-new-word.zip"
+  output_file_mode = 0666
+}
+
+resource "aws_iam_role" "lambda_role" {
+  name               = "Lambda_Function_Role"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_policy" "lambda_full_access_policy" {
+  name        = "lambda_full_access_policy"
+  description = "Policy for full access to s3 bucket, athena, cloudwatch, glue, and api gateway"
+  policy      = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = [
+          "logs:*",
+          "apigateway:*",
+          "cloudfront:*",
+          "lambda:*",
+          "athena:*",
+          "glue:*",
+          "s3:*"
+        ],
+        Resource = "*"
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_full_access_policy_attachment" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = aws_iam_policy.lambda_full_access_policy.arn
+}
+
+resource "aws_lambda_function" "get-new-word" {
+  function_name = "get-new-word"
+  filename = "lambda-new-word.zip"
+  role = aws_iam_role.lambda_role.arn
+  runtime = "python3.9"
+  handler = "new-word-lambda.lambda_handler"
+  source_code_hash = data.archive_file.new-word-lambda.output_base64sha256
+}
+
+resource "aws_lambda_permission" "allow_api_gateway_to_invoke_lambda" {
+  statement_id  = "AllowExecutionFromApiGateway"
+  action        = "lambda:*"
+  function_name = aws_lambda_function.get-new-word.arn
+  principal     = "apigateway.amazonaws.com"
+}
