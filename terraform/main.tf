@@ -211,8 +211,8 @@ resource "aws_glue_catalog_table" "glue_table" {
       serialization_library = "org.apache.hadoop.hive.serde2.OpenCSVSerde"
 
       parameters = {
+        "skip.header.line.count" = "1"
         "separatorChar" = ","
-        "skip.header.lin.count" = "1"
       }
     }
 
