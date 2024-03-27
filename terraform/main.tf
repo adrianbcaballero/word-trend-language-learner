@@ -286,7 +286,7 @@ Creating Lambda function that returns new word on request and on web access
 ====================================================================
 */
 
-resource "aws_iam_role" "lambda_role" {
+resource "aws_iam_role" "lambda_role_word" {
   name               = "Lambda_Function_Role"
   assume_role_policy = <<EOF
 {
@@ -305,7 +305,7 @@ resource "aws_iam_role" "lambda_role" {
 EOF
 }
 
-resource "aws_iam_policy" "lambda_full_access_policy" {
+resource "aws_iam_policy" "lambda_access_policy" {
   name        = "lambda_full_access_policy"
   description = "Policy for full access to s3 bucket, athena, cloudwatch, glue, and api gateway"
   policy      = jsonencode({
@@ -329,8 +329,8 @@ resource "aws_iam_policy" "lambda_full_access_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_full_access_policy_attachment" {
-  role       = aws_iam_role.lambda_role.name
-  policy_arn = aws_iam_policy.lambda_full_access_policy.arn
+  role       = aws_iam_role.lambda_role_word.name
+  policy_arn = aws_iam_policy.lambda_access_policy.arn
 }
 
 resource "aws_lambda_function" "get-new-word" {
@@ -338,7 +338,7 @@ resource "aws_lambda_function" "get-new-word" {
   s3_key = "new-word-lambda.py"
 
   function_name = "get-new-word"
-  role = aws_iam_role.lambda_role.arn
+  role = aws_iam_role.lambda_role_word.arn
   runtime = "python3.9"
   handler = "new-word-lambda.lambda_handler"
 }
