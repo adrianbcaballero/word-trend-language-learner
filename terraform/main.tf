@@ -229,8 +229,123 @@ resource "aws_glue_catalog_table" "glue_table" {
 }
 
 /*
-=================================================================
-Creating Lambda function that returns new word on request
-=================================================================
+====================================================================
+Creating s3 bucket to store lambda functions 
+====================================================================
 */
 
+resource "aws_s3_bucket" "s3lambda" {
+  bucket = "wordtrendlearner-s3lambda"
+}
+
+resource "aws_s3_bucket_ownership_controls" "s3lambda" {
+  bucket = aws_s3_bucket.s3lambda.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "s3lambda" {
+  bucket = aws_s3_bucket.s3lambda.id
+
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket_policy" "allow_access_2" {
+  bucket = aws_s3_bucket.s3lambda.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        },
+        Action   = [
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:PutObject",
+          "s3:DeleteObject", 
+        ],
+        Resource = [
+          "${aws_s3_bucket.s3lambda.arn}",
+          "${aws_s3_bucket.s3lambda.arn}/*",
+        ]
+      }
+    ]
+  })
+}
+
+/*
+====================================================================
+Creating Lambda function that returns new word on request and on web access
+====================================================================
+*/
+
+resource "aws_iam_role" "lambda_role" {
+  name               = "Lambda_Function_Role"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_policy" "lambda_full_access_policy" {
+  name        = "lambda_full_access_policy"
+  description = "Policy for full access to s3 bucket, athena, cloudwatch, glue, and api gateway"
+  policy      = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = [
+          "logs:*",
+          "apigateway:*",
+          "cloudfront:*",
+          "lambda:*",
+          "athena:*",
+          "glue:*",
+          "s3:*"
+        ],
+        Resource = "*"
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_full_access_policy_attachment" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = aws_iam_policy.lambda_full_access_policy.arn
+}
+
+resource "aws_lambda_function" "get-new-word" {
+  s3_bucket = "wordtrendlearner-s3lambda"
+  s3_key = "new-word-lambda.py"
+
+  function_name = "get-new-word"
+  role = aws_iam_role.lambda_role.arn
+  runtime = "python3.9"
+  handler = "new-word-lambda.lambda_handler"
+}
+
+resource "aws_lambda_permission" "allow_api_gateway_to_invoke_lambda" {
+  statement_id  = "AllowExecutionFromApiGateway"
+  action        = "lambda:*"
+  function_name = aws_lambda_function.get-new-word.arn
+  principal     = "apigateway.amazonaws.com"
+}
