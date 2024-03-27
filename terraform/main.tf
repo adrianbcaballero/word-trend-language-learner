@@ -287,7 +287,7 @@ Creating Lambda function that returns new word on request and on web access
 */
 
 resource "aws_iam_role" "lambda_role_word" {
-  name               = "Lambda_Function_Role"
+  name               = "Lambda_Function_Role_Word"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -306,7 +306,7 @@ EOF
 }
 
 resource "aws_iam_policy" "lambda_access_policy" {
-  name        = "lambda_full_access_policy"
+  name        = "lambda_access_policy"
   description = "Policy for full access to s3 bucket, athena, cloudwatch, glue, and api gateway"
   policy      = jsonencode({
     Version = "2012-10-17",
